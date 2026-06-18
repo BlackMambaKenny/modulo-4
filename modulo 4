@@ -1,0 +1,92 @@
+=====================================================================
+PRÁCTICA 1: CONFIGURACIÓN DE GRUB Y RECUPERACIÓN DE ROOT
+=====================================================================
+
+1. Editar el archivo de configuración de GRUB:
+sudo nano /etc/default/grub
+
+2. Regenerar el menú de GRUB (Sistemas BIOS / Tradicional):
+sudo grub2-mkconfig -o /boot/grub2/grub.cfg
+
+3. Regenerar el menú de GRUB (Sistemas UEFI / Modernos):
+sudo grub2-mkconfig -o /boot/efi/EFI/redhat/grub.cfg
+
+4. Comandos en la consola de emergencia (rd.break) para resetear root:
+mount -o remount,rw /sysroot
+chroot /sysroot
+passwd root
+touch /.autorelabel
+exit
+exit
+
+
+=====================================================================
+PRÁCTICA 2: SCRIPTS EN BASH (ARCHIVOS .SH)
+=====================================================================
+
+--- ARCHIVO 1: backup.sh ---
+#!/bin/bash
+
+# Obtener la fecha y hora en el formato dd-mm-yyyy:hh:mm
+FECHA=$(date +"%d-%m-%Y:%H:%M")
+
+# Definir el nombre del archivo de salida
+ARCHIVO_BACKUP="backup_$FECHA.tar.gz"
+
+# Crear el comprimido de la carpeta home de tu usuario
+# (Nota: Recuerda cambiar "tu_usuario" por tu nombre de usuario real en Linux)
+tar -czf "$ARCHIVO_BACKUP" /home/tu_usuario
+
+echo "Backup completado con éxito: $ARCHIVO_BACKUP"
+
+
+--- ARCHIVO 2: captura_red.sh ---
+#!/bin/bash
+
+# Solicitar el nombre del archivo al usuario
+echo -n "Introduce el nombre que deseas para el archivo de red: "
+read NOMBRE_ARCHIVO
+
+# Definir la ruta del Escritorio 
+# (Nota: Cambiar "tu_usuario" por tu nombre real. Si tu Linux está en español, usa 'Escritorio' en vez de 'Desktop')
+RUTA_ESCRITORIO="/home/tu_usuario/Desktop"
+
+# Ejecutar ifconfig y guardar el resultado en el archivo provisto
+ifconfig > "$RUTA_ESCRITORIO/$NOMBRE_ARCHIVO.txt"
+
+echo "El resultado de ifconfig se ha guardado en $RUTA_ESCRITORIO/$NOMBRE_ARCHIVO.txt"
+
+
+--- COMANDOS PARA DAR PERMISOS Y EJECUTAR LOS SCRIPTS ---
+chmod +x backup.sh
+chmod +x captura_red.sh
+
+./backup.sh
+./captura_red.sh
+
+
+=====================================================================
+PRÁCTICA 3: RED PUENTE (BRIDGE) Y SSH CON LLAVES
+=====================================================================
+
+1. Saber la IP de tu máquina Linux:
+ip a
+
+2. Probar conectividad desde el CMD de Windows:
+ping IP_DE_TU_LINUX
+
+3. Habilitar e iniciar el servicio SSH en Red Hat Linux:
+sudo systemctl enable --now sshd
+
+4. Permitir el servicio SSH en el Firewall de Linux:
+sudo firewall-cmd --permanent --add-service=ssh
+sudo firewall-cmd --reload
+
+5. Generar el par de llaves en el CMD de Windows (dejar passphrase en blanco):
+ssh-keygen -t rsa -b 4096
+
+6. Copiar la llave pública desde Windows a Linux (todo en una sola línea en CMD):
+type %USERPROFILE%\.ssh\id_rsa.pub | ssh tu_usuario@IP_DE_LINUX "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys"
+
+7. Conectarse de forma automática desde Windows por SSH:
+ssh tu_usuario@IP_DE_LINUX
